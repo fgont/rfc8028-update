@@ -52,9 +52,22 @@ the title) for use on http://www.rfc-editor.org/search.html. -->
   <middle>
   
     <section title="Informal Introduction (to be removed)" anchor="informal">
-<t>IPv6 Stateless Address Autoconfiguration (SLAAC) is based on the assumption that SLAAC routers will advertise configuration information on a local network, and SLAAC hosts will agregate this information and use it they see fits. Simple network scenarios where there is a single local router, or where there are multiple routers but all routers advertise the same
+<t>Whenever multiple routers of multiple prefixes are available on a local network, we end up looking at RFC 8028. The more recent instances of this have been <xref target="I-D.ietf-6man-rfc6724-update"/> and <xref target="I-D.link-v6ops-gulla"/>. But there have been other somewhat recent instances, such as <xref target="slaac-renum-05"/> (a mechanism in an earlier version of the WG document).</t>
 
-<section>
+<t>Support of <xref target="RFC8028"/>  is key to be able to support multi-router/multi-prefix IPv6 networks. Without it, a simple and common home setup scenario where a home network is connected to two different ISPs via two CPEs routers simply does not work.</t>
+
+<t>There's a bit of work that is still needed in this area:
+<list style="symbols">
+<t>Extrapolate RFC 8028 such that the same principles are applied to other SLAAC information (and not just to PIOs/prefixes).</t>
+<t>Provide more explicit guidance on how to implement RFC8028 -- in particular, spelling out corner cases.</t>
+<t>Updating the Node Requirements RFC such that RFC 8028 support is required (Note: Rule 5.5 in <xref target="I-D.ietf-6man-rfc6724-update"/> relies on the implementation of RFC 8028. However, while Rule 5.5 is in the process of becoming mandatory ("MUST"), the underlying support (RFC8028) is not mandatory.</t> 
+</list>
+</t>
+
+<t>This document aims at tackling these three items.</t>
+
+
+</section>
 
 
     <section title="Introduction" anchor="intro">
@@ -172,7 +185,7 @@ Let us now consider that Router C now advertises 2001:db8:a::/64 with a Preferre
 <t>This document formally updates <xref target="RFC8504"/> as follows:
 <list style="hanging">
 <t>Support for Multi-Router and Multi-Prefix Networks</t>
-<t>Nodes MUST Implement the recommendations specified in <xref target="RFC8028"/> and in this document.</t>
+<t>Nodes MUST Implement the recommendations specified in <xref target="RFC8028"/> and [this document].</t>
 </list>
 </t>
 
@@ -221,6 +234,71 @@ This document has no actions for IANA.
 	<?rfc include="reference.RFC.6105" ?>
 	<?rfc include="reference.RFC.6724" ?>
 	<?rfc include="reference.RFC.7113" ?>
+	<?rfc include="reference.I-D.ietf-6man-rfc6724-update" ?>
+	<?rfc include="reference.I-D.link-v6ops-gulla" ?>
+	
+	<reference anchor="slaac-renum-05" target="https://www.ietf.org/archive/id/draft-ietf-6man-slaac-renum-05.txt">
+		<front>
+			<title>Improving the Robustness of Stateless Address Autoconfiguration (SLAAC) to Flash Renumbering Events</title>
+	
+	
+	    <author fullname="Fernando Gont" initials="F." surname="Gont">
+
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+<!--          <code>1706</code> -->
+          <city>Villa Devoto</city>
+          <region>Ciudad Autonoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+<!--        <phone>+54 11 4650 8472</phone> -->
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+       </address>
+    </author>
+
+
+     <author fullname="Jan Zorz" initials="J." surname="Zorz">
+
+
+      <organization abbrev="6connect">6connect</organization>
+
+      <address>
+      <!--
+        <postal>
+          <street>Frankovo naselje 165</street>
+         <code>4220</code> 
+          <city>Skofja Loka</city>
+
+          <country>Slovenia</country>
+        </postal> -->
+        <email>jan@connect.com</email>
+<!--        <uri>https://www.6connect.com/</uri> -->
+      </address>
+    </author>
+    
+
+<author initials="R." surname="Patterson" fullname="Richard Patterson">
+
+      <organization>Sky UK</organization>
+
+      <address>
+
+        <email>richard.patterson@sky.uk</email>
+
+      </address>
+
+    </author>
+
+
+			<date month="March" year="2023"/>
+		</front>
+		<seriesInfo name="IETF" value="draft"/>
+	</reference>
+	
+	
     </references>
 
 
