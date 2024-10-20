@@ -1,0 +1,448 @@
+
+
+
+
+IPv6 Maintenance (6man) Working Group                            F. Gont
+Internet-Draft                                              SI6 Networks
+Updates: 4861, 4862, 8028, 8504 (if approved)            20 October 2024
+Intended status: Standards Track                                        
+Expires: 23 April 2025
+
+
+           Support for Multi-Router and Multi-Prefix Networks
+                   draft-gont-6man-rfc8028-update-00
+
+Abstract
+
+   This document discusses current limitations in IPv6 Stateless Address
+   Autoncofiguration (SLAAC) that prevents support for general and
+   common multi-router and multi-prefix scenarios.  It formally updates
+   RFC 4861, RFC 4862, and RFC 8028 such that such scenarios are
+   properly supported.  This document also formally updates RFC 8504,
+   thus requiring support of multi-router and multi-prefix networks to
+   all IPv6 nodes.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 23 April 2025.
+
+Copyright Notice
+
+   Copyright (c) 2024 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+
+
+
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 1]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Improving Support for Multi-Router and Multi-Prefix
+           Networks  . . . . . . . . . . . . . . . . . . . . . . . .   3
+     3.1.  Extrapolating RFC 8028 to other network configuration
+           information . . . . . . . . . . . . . . . . . . . . . . .   4
+     3.2.  RFC 8028 corner cases . . . . . . . . . . . . . . . . . .   4
+   4.  Requirements  . . . . . . . . . . . . . . . . . . . . . . . .   5
+     4.1.  Host Support for Multi-Router and Multi-Prefix
+           Networks  . . . . . . . . . . . . . . . . . . . . . . . .   5
+     4.2.  Node Requirements . . . . . . . . . . . . . . . . . . . .   6
+   5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
+   7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   6
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .   6
+     8.2.  Informative References  . . . . . . . . . . . . . . . . .   7
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   7
+
+1.  Introduction
+
+   IPv6 Stateless Address Autoconfiguration (SLAAC) is based on the
+   assumption that SLAAC routers will advertise configuration
+   information on a local network, and SLAAC hosts will agregate this
+   information and use it they see fits.  Simple network scenarios where
+   there is a single local router, or where there are multiple routers
+   but all routers advertise the same information, or where all
+   advertised information is equivalent, SLAAC works just fine.
+   However, more complex (yet very common) where a users attaches two
+   Customer Premises Equipment (CPE) routers to a local network for
+   improved network resilience, may very well fail in a number of ways.
+
+   [RFC8028] was first to analyze the following problematic scenario:
+
+   *  Two SLAAC routers (Router A and Router B) are connected to Network
+      C
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 2]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+   *  Router A advertises prefix 2001:db8:a::/64 for address
+      configuration, and also enforces ingress filtering [RFC2827].
+
+   *  Router B advertises prefix 2001:db8:b::/64 for address
+      configuration, and also enforces ingress filtering [RFC2827].
+
+   *  Host C attaches to Network C, and thus configures addresses in
+      both prefix 2001:db8:a::/64 and 2001:db8:b::/64.
+
+   Clearly, things will work fine if packets sourced from prefix
+   2001:db8:a::/64 employ Router A as the next-hop, while packets
+   sourced from prefix 2001:db8:b::/64 employ Router B as the next-hop.
+   However, in all other cases packets will be dropped, as a result of
+   ingress/egress filtering policies enforced by Router A and Router B.
+
+   [RFC8028] readily recommends that hosts record whichrouter advertised
+   which prefixes, and also hints that e.g.  Route Information Options
+   (RIOs) should be associaced with the PIOs advertised by the router
+   advertising the PIO itself. e.g., in a scenario whe,re:
+
+   *  Router A advertises prefix 2001:db8:a::/64 for address
+      configuration, and advertises a RIO for prefix 2001:db8:10::/64.
+
+   *  Router B advertises prefix 2001:db8:b::/64 for address
+      configuration.
+
+   The route to 2001:db8:10::/64 should only be employed for packets
+   sourced from prefix 2001:db8:a::/64, and hence, in his case, via
+   Router A.
+
+   While [RFC8028] definitely provides correct advice, there are two
+   gaps in the specification, that this document is meant to address:
+
+   *  Extrapolating RFC 8028 to other network configuration information.
+
+   *  Considering some corner cases that must be properly handled when
+      implementing the recommendations from [RFC8028].
+
+2.  Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+3.  Improving Support for Multi-Router and Multi-Prefix Networks
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 3]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+3.1.  Extrapolating RFC 8028 to other network configuration information
+
+   Consider an expanded version of the scenario discussed in Section 1:
+
+   *  Two SLAAC routers (Router A and Router B) are connected to Network
+      C
+
+   *  Router A advertises prefix 2001:db8:a::/64 for address
+      configuration, advertises the RDNSS 2001:db8:aaaa::1, and also
+      enforces ingress filtering [RFC2827].
+
+   *  RDNSS 2001:db8:aaaa::1 enforces a security policy where DNS
+      queries are only allowed from 2001:db8:a::/64.
+
+   *  Router B advertises prefix 2001:db8:b::/64 for address
+      configuration, advertises the RDNSS 2001:db8:bbbb::1 and also
+      enforces ingress filtering [RFC2827].
+
+   *  RDNSS 2001:db8:bbbb::1 enforces a security policy where DNS
+      queries are only allowed from 2001:db8:b::/64.
+
+   *  Host C attaches to Network C, and thus configures addresses in
+      both prefix 2001:db8:a::/64 and 2001:db8:b::/64.
+
+   Even if Host C implements the advice from [RFC8028] and pick a valid
+   {Source Address, Next-Hop} pair, it might still end up sending DNS
+   queries from a prefix that the RDNSS is not expecting to serve.
+   Thus, the general idea is that:
+
+   *  IPv6 prefixes are associated with the SLAAC routers that have
+      advertised them.
+
+   *  Any routing information (such as that conveyed via RIOs and
+      Redirect messages) are to be employed only for packets with a
+      Source Address in the IPv6 Prefix set of the router that
+      advertised this information.
+
+   *  Any host-related information (such as RDNSS and RDNSSL) should be
+      employed Source Address in the IPv6 Prefix set of the router that
+      advertised this information.
+
+3.2.  RFC 8028 corner cases
+
+   Consider the following scenario:
+
+   *  Three SLAAC routers (Router A, Router B, and Router C) are
+      connected to Network D.
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 4]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+   *  Router A advertises prefix 2001:db8:a::/64 for address
+      configuration.
+
+   *  Router B advertises prefix 2001:db8:b::/64 for address
+      configuration.
+
+   *  Router C advertises prefix 2001:db8:a::/64 and 2001:db8:c::/64 for
+      address configuration,.
+
+   *  Host D attaches to Network D, and thus configures addresses in
+      prefixes 2001:db8:a::/64, 2001:db8:b::/64, and 2001:db8:c::/64.
+
+   Let us now consider that Router C now advertises 2001:db8:a::/64 with
+   a Preferred Lifetime and Valid Lifetime of 0.  While Host D might be
+   tempted to simply remove any configured addresses for such prefix, it
+   should only disassociate prefix 2001:db8:a::/64 with Router C.
+   However, this should not affect the association of prefix
+   2001:db8:a::/64 with Router A, or the associated remaning lifetimes
+   of that prefix, in association with Router A.
+
+   Only when a piece of SLAAC information is no longer assiated with any
+   router should the associated configuration be removed from a system.
+
+4.  Requirements
+
+4.1.  Host Support for Multi-Router and Multi-Prefix Networks
+
+   SLAAC hosts SHOULD record which router (as identified by its IPv6
+   link-local address and the associated zone index) advertised each
+   piece of SLAAC network configuration information.
+
+   Specifically, SLAAC routers SHOULD associate each SLAAC router with
+   an IPv6 prefix set, where the prefix set is composed of all prefixes
+   that has been advertised by the router via SLAAC PIOs (irrespective
+   of how e.g. the "A" and "L" flags of the PIO were set).
+
+   Routing inforamation conveyed in SLAAC RIOs or Redirect messages
+   SHOULD be associated with the prefix set of the router that
+   advertised the information, and SHOULD only be employed for IPv6
+   packets sourced from addresses in that prefix set.
+
+   Server-type information such as RDNSS SHOULD be associated with the
+   prefix set of the router that advertised it.  Hosts SHOULD perform
+   queries to such servers from IP addresses belonging to the prefix set
+   of the router that advertised the servers.
+
+
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 5]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+4.2.  Node Requirements
+
+   This document formally updates [RFC8504] as follows:
+
+      Support for Multi-Router and Multi-Prefix Networks
+
+      Nodes MUST Implement the ehavior specified in [RFC8028] and in
+      this document.
+
+5.  IANA Considerations
+
+   This document has no actions for IANA.
+
+6.  Security Considerations
+
+   This document does not introduce any new attack vectors to the ones
+   associated with IPv8 Neighbor Discovery [RFC4861] and IPv6 Stateless
+   Address Autoconfiguration (SLAAC).
+
+   If attacks based on forged RA packets are a concern, technologies
+   such as RA-Guard [RFC6105] [RFC7113] should be deployed.
+
+7.  Acknowledgments
+
+   The authors would like to thank (in alphabetical order) [TBD] for
+   providing valuable comments on earlier versions of this document.
+
+   Fernando would also like to thank Brian Carpenter who, over the
+   years, has answered many questions and provided valuable comments
+   that has benefited his protocol-related work.
+
+8.  References
+
+8.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC4861]  Narten, T., Nordmark, E., Simpson, W., and H. Soliman,
+              "Neighbor Discovery for IP version 6 (IPv6)", RFC 4861,
+              DOI 10.17487/RFC4861, September 2007,
+              <https://www.rfc-editor.org/info/rfc4861>.
+
+
+
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 6]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+   [RFC4862]  Thomson, S., Narten, T., and T. Jinmei, "IPv6 Stateless
+              Address Autoconfiguration", RFC 4862,
+              DOI 10.17487/RFC4862, September 2007,
+              <https://www.rfc-editor.org/info/rfc4862>.
+
+   [RFC8028]  Baker, F. and B. Carpenter, "First-Hop Router Selection by
+              Hosts in a Multi-Prefix Network", RFC 8028,
+              DOI 10.17487/RFC8028, November 2016,
+              <https://www.rfc-editor.org/info/rfc8028>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC8504]  Chown, T., Loughney, J., and T. Winters, "IPv6 Node
+              Requirements", BCP 220, RFC 8504, DOI 10.17487/RFC8504,
+              January 2019, <https://www.rfc-editor.org/info/rfc8504>.
+
+8.2.  Informative References
+
+   [RFC2827]  Ferguson, P. and D. Senie, "Network Ingress Filtering:
+              Defeating Denial of Service Attacks which employ IP Source
+              Address Spoofing", BCP 38, RFC 2827, DOI 10.17487/RFC2827,
+              May 2000, <https://www.rfc-editor.org/info/rfc2827>.
+
+   [RFC6105]  Levy-Abegnoli, E., Van de Velde, G., Popoviciu, C., and J.
+              Mohacsi, "IPv6 Router Advertisement Guard", RFC 6105,
+              DOI 10.17487/RFC6105, February 2011,
+              <https://www.rfc-editor.org/info/rfc6105>.
+
+   [RFC6724]  Thaler, D., Ed., Draves, R., Matsumoto, A., and T. Chown,
+              "Default Address Selection for Internet Protocol Version 6
+              (IPv6)", RFC 6724, DOI 10.17487/RFC6724, September 2012,
+              <https://www.rfc-editor.org/info/rfc6724>.
+
+   [RFC7113]  Gont, F., "Implementation Advice for IPv6 Router
+              Advertisement Guard (RA-Guard)", RFC 7113,
+              DOI 10.17487/RFC7113, February 2014,
+              <https://www.rfc-editor.org/info/rfc7113>.
+
+Author's Address
+
+   Fernando Gont
+   SI6 Networks
+   Segurola y Habana 4310, 7mo Piso
+   Villa Devoto
+   Ciudad Autonoma de Buenos Aires
+   Argentina
+
+
+
+Gont                      Expires 23 April 2025                 [Page 7]
+
+Internet-Draft  Improving Support for Multi-Router and M    October 2024
+
+
+   Email: fgont@si6networks.com
+   URI:   https://www.si6networks.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gont                      Expires 23 April 2025                 [Page 8]

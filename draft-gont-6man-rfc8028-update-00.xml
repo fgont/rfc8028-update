@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+
+<?rfc subcompact="no" ?>
+<?rfc toc="yes" ?>
+<?rfc symrefs="yes" ?>
+<?rfc sortrefs="yes"?>
+<?rfc strict="no" ?>
+
+<rfc updates="4861, 4862, 8028, 8504" category="std"  ipr="trust200902"
+docName="draft-gont-6man-rfc8028-update-00">
+  <front>
+    <title abbrev="Improving Support for Multi-Router and Multi-Prefix Networks">Support for Multi-Router and Multi-Prefix IPv6 Networks</title>
+
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+<!--          <code>1706</code> -->
+          <city>Villa Devoto</city>
+          <region>Ciudad Autonoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+<!--        <phone>+54 11 4650 8472</phone> -->
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+       </address>
+    </author>
+
+
+    <date/>
+
+    <area>Internet</area>
+    <workgroup>IPv6 Maintenance (6man) Working Group</workgroup>
+
+<!-- [rfced] Please insert any keywords (beyond those that appear in
+the title) for use on http://www.rfc-editor.org/search.html. -->
+
+<keyword></keyword>
+
+
+
+    <abstract>
+<t>This document discusses current limitations in IPv6 Stateless Address Autoncofiguration (SLAAC) that prevents support for general and common multi-router and multi-prefix scenarios. It formally updates RFC 4861, RFC 4862, and RFC 8028 such that such scenarios are properly supported. This document also formally updates RFC 8504, thus requiring support of multi-router and multi-prefix networks to all IPv6 nodes.
+</t>
+    </abstract>
+  </front>
+  <middle>
+  
+    <section title="Informal Introduction (to be removed)" anchor="informal">
+<t>IPv6 Stateless Address Autoconfiguration (SLAAC) is based on the assumption that SLAAC routers will advertise configuration information on a local network, and SLAAC hosts will agregate this information and use it they see fits. Simple network scenarios where there is a single local router, or where there are multiple routers but all routers advertise the same
+
+<section>
+
+
+    <section title="Introduction" anchor="intro">
+<t>IPv6 Stateless Address Autoconfiguration (SLAAC) is based on the assumption that SLAAC routers will advertise configuration information on a local network, and SLAAC hosts will agregate this information and use it they see fits. Simple network scenarios where there is a single local router, or where there are multiple routers but all routers advertise the same information, or where all advertised information is equivalent, SLAAC works just fine. However, more complex (yet very common) where a users attaches two Customer Premises Equipment (CPE) routers to a local network for improved network resilience, may very well fail in a number of ways.</t>
+
+<t><xref target="RFC8028"/> was first to analyze the following problematic scenario:
+<list style="symbols">
+<t>Two SLAAC routers (Router A and Router B) are connected to Network C</t>
+<t>Router A advertises prefix 2001:db8:a::/64 for address configuration, and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+<t>Router B advertises prefix 2001:db8:b::/64 for address configuration, and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+<t>Host C attaches to Network C, and thus configures addresses in both prefix 2001:db8:a::/64 and 2001:db8:b::/64.</t>
+</list>
+</t>
+
+<t>Clearly, things will work fine if packets sourced from prefix 2001:db8:a::/64 employ Router A as the next-hop, while packets sourced from prefix 2001:db8:b::/64 employ Router B as the next-hop. However, in all other cases packets will be dropped, as a result of ingress/egress filtering policies enforced by Router A and Router B.</t>
+
+<t><xref target="RFC8028"/> readily recommends that hosts record whichrouter advertised which prefixes, and also hints that e.g. Route Information Options (RIOs) should be associaced with the PIOs advertised by the router advertising the PIO itself. e.g., in a scenario whe,re:
+<list style="symbols">
+<t>Router A advertises prefix 2001:db8:a::/64 for address configuration, and advertises a RIO for prefix 2001:db8:10::/64.</t>
+<t>Router B advertises prefix 2001:db8:b::/64 for address configuration.</t>
+</list>
+
+The route to 2001:db8:10::/64 should only be employed for packets sourced from prefix 2001:db8:a::/64, and hence, in his case, via Router A.
+</t>
+
+<t>While <xref target="RFC8028"/> definitely provides correct advice, there are two gaps in the specification, that this document is meant to address:
+<list style="symbols">
+<t>Extrapolating RFC 8028 to other network configuration information.</t>
+<t>Considering some corner cases that must be properly handled when implementing the recommendations from <xref target="RFC8028"/>.</t>
+</list>
+
+</t>
+
+
+</section>
+
+<section title="Terminology" anchor="term">
+
+<!--
+<t>The term "global scope addresses" is used in this document to
+   collectively refer to "Global unicast addresses" as defined in
+   <xref target="RFC4291"/> and "Unique local addresses" as defined in <xref target="RFC4193"/>, and
+   not to "globally reachable" as defined in <xref target="RFC8190"/>.
+</t> 
+-->
+
+
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target='RFC2119' /> <xref target='RFC8174' /> when, and only when, they
+      appear in all capitals, as shown here.
+</t>
+
+</section>
+
+
+<section title="Improving Support for Multi-Router and Multi-Prefix Networks" anchor="support">
+
+<section title="Extrapolating RFC 8028 to other network configuration information" anchor="extrapolating-rfc8028">
+
+
+
+<t>Consider an expanded version of the scenario discussed in <xref target="intro"/>:
+<list style="symbols">
+<t>Two SLAAC routers (Router A and Router B) are connected to Network C</t>
+<t>Router A advertises prefix 2001:db8:a::/64 for address configuration, advertises the RDNSS 2001:db8:aaaa::1, and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+<t>RDNSS 2001:db8:aaaa::1 enforces a security policy where DNS queries are only allowed from 2001:db8:a::/64.</t>
+<t>Router B advertises prefix 2001:db8:b::/64 for address configuration, advertises the RDNSS 2001:db8:bbbb::1 and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+<t>RDNSS 2001:db8:bbbb::1 enforces a security policy where DNS queries are only allowed from 2001:db8:b::/64.</t>
+<t>Host C attaches to Network C, and thus configures addresses in both prefix 2001:db8:a::/64 and 2001:db8:b::/64.</t>
+</list>
+
+
+Even if Host C implements the advice from <xref target="RFC8028"/> and pick a valid {Source Address, Next-Hop} pair, it might still end up sending DNS queries from a prefix that the RDNSS is not expecting to serve. Thus, the general idea is that:
+<list style="symbols">
+<t>IPv6 prefixes are associated with the SLAAC routers that have advertised them.</t>
+<t>Any routing information (such as that conveyed via RIOs and Redirect messages) are to be employed only for packets with a Source Address in the IPv6 Prefix set of the router that advertised this information.</t>
+<t>Any host-related information (such as RDNSS and RDNSSL) should be employed Source Address in the IPv6 Prefix set of the router that advertised this information.</t>
+</list>
+</t>
+
+</section>
+
+
+
+
+<section title="RFC 8028 corner cases" anchor="corner-cases">
+
+<t>Consider the following scenario:
+<list style="symbols">
+<t>Three SLAAC routers (Router A, Router B, and Router C) are connected to Network D.</t>
+<t>Router A advertises prefix 2001:db8:a::/64 for address configuration.</t>
+<t>Router B advertises prefix 2001:db8:b::/64 for address configuration.</t>
+<t>Router C advertises prefix 2001:db8:a::/64 and 2001:db8:c::/64 for address configuration,.</t>
+<t>Host D attaches to Network D, and thus configures addresses in prefixes 2001:db8:a::/64, 2001:db8:b::/64, and 2001:db8:c::/64.</t>
+</list>
+
+Let us now consider that Router C now advertises 2001:db8:a::/64 with a Preferred Lifetime and Valid Lifetime of 0. While Host D might be tempted to simply remove any configured addresses for such prefix, it should only disassociate prefix 2001:db8:a::/64 with Router C. However, this should not affect the association of prefix 2001:db8:a::/64 with Router A, or the associated remaning lifetimes of that prefix, in association with Router A.
+</t>
+
+<t>Only when a piece of SLAAC information is no longer assiated with any router should the associated configuration be removed from a system.</t>
+
+</section>
+</section>
+
+<section title="Requirements" anchor="requirements">
+<section title="Host Support for Multi-Router and Multi-Prefix IPv6 Networks" anchor="host-reqs">
+<t>SLAAC hosts SHOULD record which router (as identified by its IPv6 link-local address and the associated zone index) advertised each piece of SLAAC network configuration information.</t>
+<t>Specifically, SLAAC routers SHOULD associate each SLAAC router with an IPv6 prefix set, where the prefix set is composed of all prefixes that has been advertised by the router via SLAAC PIOs (irrespective of how e.g. the "A" and "L" flags of the PIO were set).</t>
+<t>Routing inforamation conveyed in SLAAC RIOs or Redirect messages SHOULD be associated with the prefix set of the router that advertised the information, and SHOULD only be employed for IPv6 packets sourced from addresses in that prefix set.</t>
+<t>Server-type information such as RDNSS SHOULD be associated with the prefix set of the router that advertised it. Hosts SHOULD perform queries to such servers from IP addresses belonging to the prefix set of the router that advertised the servers.</t>
+</section>
+
+<section title="Node Requirements" anchor="node-reqs">
+<t>This document formally updates <xref target="RFC8504"/> as follows:
+<list style="hanging">
+<t>Support for Multi-Router and Multi-Prefix Networks</t>
+<t>Nodes MUST Implement the recommendations specified in <xref target="RFC8028"/> and in this document.</t>
+</list>
+</t>
+
+</section>
+</section>
+
+
+    <section title="IANA Considerations">
+      <t>
+This document has no actions for IANA.
+</t>
+    </section>
+
+
+    <section title="Security Considerations">
+<t>This document does not introduce any new attack vectors to the ones associated with IPv8 Neighbor Discovery <xref target="RFC4861"/> and IPv6 Stateless Address Autoconfiguration (SLAAC).</t>
+
+<t>If attacks based on forged RA packets are a concern, technologies such as RA-Guard <xref target="RFC6105"/> <xref target="RFC7113"/> should be deployed.</t>
+
+    </section>
+
+
+
+<section title="Acknowledgments">
+<t>The authors would like to thank (in alphabetical order) [TBD] for providing valuable comments on earlier versions of this document.</t>
+
+<t>Fernando would also like to thank Brian Carpenter who, over the years, has answered many questions and provided valuable comments that has benefited his protocol-related work.</t>
+
+    </section>
+
+  </middle>
+  <back>
+
+    <references title="Normative References">
+	<?rfc include="reference.RFC.2119" ?>
+	<?rfc include="reference.RFC.8028" ?>
+	<?rfc include="reference.RFC.4861" ?>
+	<?rfc include="reference.RFC.4862" ?>
+	<?rfc include="reference.RFC.8174" ?>
+	<?rfc include="reference.RFC.8504" ?>
+	</references>
+
+    <references title="Informative References">
+
+	<?rfc include="reference.RFC.2827" ?>
+	<?rfc include="reference.RFC.6105" ?>
+	<?rfc include="reference.RFC.6724" ?>
+	<?rfc include="reference.RFC.7113" ?>
+    </references>
+
+
+  </back>
+</rfc>
+<!--
+Local Variables:
+mode:xml
+End:
+=-->
