@@ -3,14 +3,14 @@
 
 
 IPv6 Operations Working Group (v6ops)                            F. Gont
-Internet-Draft                                              SI6 Networks
-Intended status: Informational                          14 November 2024
-Expires: 18 May 2025
+Internet-Draft                                                   G. Gont
+Intended status: Informational                              SI6 Networks
+Expires: 1 June 2025                                    28 November 2024
 
 
  Problem Statement about IPv6 Support for Multiple Routers and Multiple
                                Interfaces
-                       draft-v6ops-multi-ipv6-00
+                     draft-gont-v6ops-multi-ipv6-00
 
 Abstract
 
@@ -36,7 +36,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 18 May 2025.
+   This Internet-Draft will expire on 1 June 2025.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Gont                       Expires 18 May 2025                  [Page 1]
+Gont & Gont                Expires 1 June 2025                  [Page 1]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -83,7 +83,7 @@ Table of Contents
    9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   8
      9.1.  Normative References  . . . . . . . . . . . . . . . . . .   8
      9.2.  Informative References  . . . . . . . . . . . . . . . . .   9
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   9
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  10
 
 1.  Introduction
 
@@ -109,7 +109,7 @@ Table of Contents
 
 
 
-Gont                       Expires 18 May 2025                  [Page 2]
+Gont & Gont                Expires 1 June 2025                  [Page 2]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -165,7 +165,7 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 
 
-Gont                       Expires 18 May 2025                  [Page 3]
+Gont & Gont                Expires 1 June 2025                  [Page 3]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -221,7 +221,7 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 
 
-Gont                       Expires 18 May 2025                  [Page 4]
+Gont & Gont                Expires 1 June 2025                  [Page 4]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -277,7 +277,7 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 
 
-Gont                       Expires 18 May 2025                  [Page 5]
+Gont & Gont                Expires 1 June 2025                  [Page 5]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -333,7 +333,7 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 
 
-Gont                       Expires 18 May 2025                  [Page 6]
+Gont & Gont                Expires 1 June 2025                  [Page 6]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -389,7 +389,7 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 
 
-Gont                       Expires 18 May 2025                  [Page 7]
+Gont & Gont                Expires 1 June 2025                  [Page 7]
 
 Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
@@ -416,6 +416,9 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
    As a result, this document concludes that protocol improvements that
    accommodate these deployment scenarios are warranted.
 
+   [draft-gont-6man-rfc8028-update-00] is an ongoing effort to improve
+   IPv6 Support for Multiple Routers and Multiple Interfaces.
+
 6.  IANA Considerations
 
    This document has no actions for IANA.
@@ -426,8 +429,9 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 8.  Acknowledgments
 
-   The authors would like to thank (in alphabetical order) [TBD] for
-   providing valuable comments on earlier versions of this document.
+   The authors would like to thank (in alphabetical order) Brian
+   Carpenter for providing valuable comments on earlier versions of this
+   document.
 
    Fernando would also like to thank Brian Carpenter who, over the
    years, has answered many questions and provided valuable comments
@@ -437,18 +441,19 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 9.1.  Normative References
 
+
+
+
+
+Gont & Gont                Expires 1 June 2025                  [Page 8]
+
+Internet-Draft  Problem Statement about Multi-Router and   November 2024
+
+
    [RFC1122]  Braden, R., Ed., "Requirements for Internet Hosts -
               Communication Layers", STD 3, RFC 1122,
               DOI 10.17487/RFC1122, October 1989,
               <https://www.rfc-editor.org/info/rfc1122>.
-
-
-
-
-Gont                       Expires 18 May 2025                  [Page 8]
-
-Internet-Draft  Problem Statement about Multi-Router and   November 2024
-
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -481,12 +486,27 @@ Internet-Draft  Problem Statement about Multi-Router and   November 2024
 
 9.2.  Informative References
 
+   [draft-gont-6man-rfc8028-update-00]
+              Gont, F., "Support for Multi-Router and Multi-Prefix IPv6
+              Networks", IETF draft, November 2024,
+              <https://www.ietf.org/archive/id/draft-gont-6man-rfc8028-
+              update-00.txt>.
+
    [RFC2827]  Ferguson, P. and D. Senie, "Network Ingress Filtering:
               Defeating Denial of Service Attacks which employ IP Source
               Address Spoofing", BCP 38, RFC 2827, DOI 10.17487/RFC2827,
               May 2000, <https://www.rfc-editor.org/info/rfc2827>.
 
-Author's Address
+
+
+
+
+Gont & Gont                Expires 1 June 2025                  [Page 9]
+
+Internet-Draft  Problem Statement about Multi-Router and   November 2024
+
+
+Authors' Addresses
 
    Fernando Gont
    SI6 Networks
@@ -498,7 +518,43 @@ Author's Address
    URI:   https://www.si6networks.com
 
 
+   Guillermo Gont
+   SI6 Networks
+   Segurola y Habana 4310, 7mo Piso
+   Villa Devoto
+   Ciudad Autonoma de Buenos Aires
+   Argentina
+   Email: ggont@si6networks.com
+   URI:   https://www.si6networks.com
 
 
 
-Gont                       Expires 18 May 2025                  [Page 9]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gont & Gont                Expires 1 June 2025                 [Page 10]
