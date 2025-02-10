@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+
+<?rfc subcompact="no" ?>
+<?rfc toc="yes" ?>
+<?rfc symrefs="yes" ?>
+<?rfc sortrefs="yes"?>
+<?rfc strict="no" ?>
+
+<rfc updates="4191, 4861, 4862, 8504" obsoletes="8028" category="std"  ipr="trust200902"
+docName="draft-gont-6man-multi-ipv6-spec-00">
+  <front>
+    <title abbrev="Support for Multi-Router and Multi-Prefix Networks">Improving Support for Multi-Router and Multi-Prefix IPv6 Networks</title>
+
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+<!--          <code>1706</code> -->
+          <city>Villa Devoto</city>
+          <region>Ciudad Autonoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+<!--        <phone>+54 11 4650 8472</phone> -->
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+       </address>
+    </author>
+
+
+    <date/>
+
+    <area>Internet</area>
+    <workgroup>IPv6 Maintenance (6man) Working Group</workgroup>
+
+<!-- [rfced] Please insert any keywords (beyond those that appear in
+the title) for use on http://www.rfc-editor.org/search.html. -->
+
+<keyword></keyword>
+
+
+
+    <abstract>
+<t>This document specifies a improvements to IPv6 Stateless Address Autoncofiguration (SLAAC) to fully support common multi-router and multi-prefix scenarios. It formally updates RFC 4191, RFC 4861, RFC 4862, and RFC 8504, and obsoletes RFC 8028, such that these scenarios are properly supported by IPv6 host implementations.
+</t>
+    </abstract>
+  </front>
+  <middle>
+
+<!--  
+    <section title="Informal Introduction (to be removed)" anchor="informal">
+<t>Scenarios where IPv6 hosts attach to a local network where multiple-routers and/or multiple-prefixes are available are known to be badly supported (if at all) by IPv6 host implementations. Similarly, scenarios where IPv6 hosts attach to multiple local networks via different network interfaces are also known to be largely unsupported by IPv6 host implementations.
+These scenarios, along the associated challenges, are discussed in detail in <xref target="I-D.gont-v6ops-multi-ipv6"/>.</t>
+
+<t><xref target="RFC8028"/> readility discusses the challenge of selecting an appropriate next-hop router, given an IPv6 source address. However, this is one of the multiple challenges that needs to be addressed to fully support multi-router/multi-prefix scenarios.</t>
+<t>This document is a full specification of al the local mechanisms and policies that must be implemented by an IPv6 host to fully support multi-router/multi-prefix scenarios, as discussed in <xref target="I-D.gont-v6ops-multi-ipv6"/>.
+</section>
+-->
+
+    <section title="Introduction" anchor="intro">
+<t>IPv6 Stateless Address Autoconfiguration (SLAAC) is based on the premise that SLAAC routers advertise configuration information on a local network and SLAAC hosts aggregate this information and use it as they see fits. In the case of simple network such as a local network with a single SLAAC router, or a network with multiple SLAAC routers where all routers advertise the same network configuration information, SLAAC works just fine. However, slightly more complex (yet very common) scenarios are very badly supported (if at all). THese scenarios include, but are not limited to, the following:
+    <list style="symbols">
+        <t>Two Customer Premises Equipment (CPE) routers are attached to a local network, whether to perform basic load-sharing across the two upstream connctions, or for improved resiliency (i.e. provide a fall-back upstream Internet connection).</t>
+
+        <t>An IPv6 host attaches to two different local networks via different network interfaces. For example, an IPv6 host employ a wired Ethernet connection and a Wi-Fi wireless connection.</t>
+        
+        <t>A mobile node employs a 4G mobile connection, and also leverages WiFi connectivity where available.</t>
+    </list>
+</t>
+
+<t>As discussed in <xref target="I-D.gont-v6ops-multi-ipv6"/>, these scenarios are not only common, but support for these scenarios may actually represent a pre-requisite for deploying IPv6 in an Enterprise or home office enfironments. Therefore, they warrant native and proper support by IPv6 hosts.</t>
+
+<t><xref target="RFC8028"/> discussed the challenge of selecting an appropriate default router in Multi-IPv6 scenarios, and specified recommendations in that space. This document builds upon <xref target="RFC8028"/> to provide a more comprehensive solution to the problem at hand.</t>
+
+</section>
+
+<section title="Terminology" anchor="term">
+
+<t>
+<list style="hanging">
+<t hangText="Multi-IPv6:"><vspace blankLines="0" />
+The term "Multi-IPv6" (case insensitive) is employed throughout this document as a short-hand for network scenarios where multiple IPv6 routers and/or multiple IPv6 prefixe are employed.
+</t>
+
+<t hangText="SLAAC prefix set:"><vspace blankLines="0" />
+The SLAAC prefix set for an SLAAC router is composed of all prefixes that have been advertised by the router via SLAAC PIOs (irrespective of how e.g. the "A" and "L" flags of the PIO were set).
+</t>
+</list>
+</t>
+
+
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target='RFC2119' /> <xref target='RFC8174' /> when, and only when, they
+      appear in all capitals, as shown here.
+</t>
+
+</section>
+
+<!--
+<section title="Improving Support for Multi-Router and Multi-Prefix Networks" anchor="support">
+-->
+
+<section title="Conceptual model" anchor="model">
+
+<!--
+<t>Somewhat ironically, the current behavior of SLAAC hosts is to aggregate SLAAC information as if information advertised by any local SLAAC router was usable along with any other local SLAAC router or any other information advertised by any other local SLAAC router.  As discussed in <xref target="I-D.gont-v6ops-multi-ipv6"/>, this approach will only work for very simple network scenarios, but usually fail in the presence of multi-ipv6 scenarios.</t>
+-->
+
+<t>The key to properly support multi-ipv6 scenarios is for IPv6 hosts to employ SLAAC network configuration according to these principles:
+    <list style="symbols">
+        <t>SLAAC configuration information advertised by a SLAAC router should be considered an atomic set of information that is not aggregatable with information advertised by any other local SLAAC routers. This means that:
+            <list style="symbols">
+                <t>Hosts should maintain state for SLAAC information on a per-router basis (as opposed to "per-host" or "per-interface" basis. If the same piece of information is advertised by multiple SLAAC routers, host must maintain state information for the advertised information on a per-router basis *i.e., onces for each advertising router).</t>
+
+                <t>As a result of this consideration, in scenarios where the same network configuration information is originally advertised by multiple local SLAAC routers, such information may eventually expire or be considered invalid for one of the SLAAC routers that advertised it, but still be valid for some of the other routers that have advertised it (since state is maintained on a per-router basis as opposed to a per-host basis).</t>
+
+                <t>Hosts should not employ information advertised by one SLAAC router along with information advertised by a different SLAAC router. For example, in a network scenario where SLAAC router ROUTER_A advertises {RDNSS_A, autoconfiguration prefix PREFIX_A} and SLAAC router ROUTER_B advertises {RDNSS_B, autoconfiguration prefix PREFIX_B}, SLAACs hosts should NOT do any of the following:
+                    <list style="symbols">
+                        <t>Send packets from PREFIX_A via ROUTER_B (or packets from PREFIX_B via ROUTER_A)</t>
+                        <t>Send DNS queries from PREFIX_A to RDNSS_B (or queries from PREFIX_B to RDNSS_A)</t>
+                        <t>Send packets from PREFIX_A to an IPv6 address obtained via RDNSS_B (or packets from PREFIX_B to an IPv6 address obtained via RDNSS_A)</t>
+                    </list>
+                </t>
+            </list>
+        </t>
+
+        <t>
+          A addresses configured from a given SLAAC prefix should only be employed with the SLAAC routers that have advertised such prefix on the local network. Please note that is quite common for IPv6 routers to enforce ingress/egress filtering, and thus in a scenario where SLAAC router ROUTER_A advertises {RDNSS_A, autoconfiguration prefix PREFIX_A} and SLAAC router ROUTER_B advertises {RDNSS_B, autoconfiguration prefix PREFIX_B}, ROUTER_A might drop outgoing packets that are not sourced from PREFIX_A, while ROUTER_B might drop outgoing packets that are not sourced from PREFIX_B.
+        </t>
+
+        <t>It is not uncommon for hosts to enforce Access Control Lists (ACLs) based on the IPv6 address of incoming requests. Thus, as noted above, this means that:
+            <list>
+              <t>In a scenario where SLAAC router ROUTER_A advertises {RDNSS_A, autoconfiguration prefix PREFIX_A} and SLAAC router ROUTER_B advertises {RDNSS_B, autoconfiguration prefix PREFIX_B}, RDNSS_A might drop DNS queries that do not originate from PREFIX_A, while RDNSS_B might drop DNS queries that do not originate from PREFIX_B.
+              </t> 
+              <t>Communications with addresses obtained via a RDNSS should be carried out using source addresses from the prefix-set fo the router that advertised the RDNSS that was employed for name resultionn. In a scenario where SLAAC router ROUTER_A advertises {RDNSS_A, autoconfiguration prefix PREFIX_A} and SLAAC router ROUTER_B advertises {RDNSS_B, autoconfiguration prefix PREFIX_B}, RNDSS_A might resolve e.g. "www.example.com" to an IPv6 address that will drop incoming requests unless they originate from PREFIX_A, while RDNSS_B might resolve the same domain name ("www.example.com") to a different IPv6 address that will drop incoming requests unless they originate from PREFIX_B.
+              </t>
+            </list>
+        </t>
+    </list>
+</t>
+
+</section>
+
+<section title="Protocol Specification" anchor="protocol-spec">
+<t>
+<list style="symbols">
+  <t>SLAAC hosts MUST maintain state information for each piece of SLAAC information advertised by each SLAAC router, on a per-router basis. This means, for example, that for each piece of SLAAC information that employs "lifetimes", the associated current lifetimes should be computed/maintained on a per-router basis. If a per-router lifetime e.g. expires, this should only affect the usage of such information via the router for which the "lifetime" has expired (please see <xref target="conflicting"/> for a more detailed discussion).</t>
+
+<t>SLAAC hosts MUST associate each SLAAC router with an IPv6 prefix set, that is composed of all prefixes that has been advertised by the router via SLAAC PIOs (irrespective of how e.g. the "A" and "L" flags of the PIO were set).</t>
+
+<t>When sending packets via a SLAAC router, SLAAC hosts MUST set the IPv6 Source Address of such packets to an belonging to the prefix set of such router.</t>
+
+  <t>Any routing information (such as that conveyed via RIOs <xref target="RFC4191"/> and Redirect messages <xref target="RFC4861"/>) MUST NOT be employed for packets sent with a Source Address that does not belong to the IPv6 prefix set of the SLAAC router that advertised this information .</t>
+
+  <t>DNS queries sent to a RDNSS SHOULD employ source addresses from the prefix set of the router that advertised the RDNSS. For example, if only SLAAC router ROUTER_A has advertised RDNSS_A, DNS queries sent tO RDNSS_A should employ addresses from PREFIX_A.
+  <!--
+    <list style="symbols">
+    <t>When a host adds RDNSS_A (advertised by ROUTER_A) to the local list of RDNSS servers, the host SHOULD also add a host route (/128) to RDNSS_A via ROUTER_A. If/when RDNSS_A is removed from the lcal list of RDNSS, the route SHOULD also be removed.</t>
+    </list>
+  -->
+  </t>
+
+  <t>Information obtained from a RDNSS server MUST only be employed using IPv6 source address from the same prefix employed for the source address of the DNS queries to the RDNSS. 
+  
+  <!-- One way to enforce this behavior is as follows:
+    <list style="symbols">
+    <t>Whenever a AAAA record (say, IPV6_ADD_1) is added to the local DNS cache, a host route to that IPv6 address (IPV6_ADDR_1/128) should be added to the local routing table. Whenever the AAAA record is removed from the local DNS cache, the corresponding host route (IPV6_ADDR_1/128) should be removed from the local routing table.</t>
+    </list> -->
+  </t>
+</list>
+</t>
+
+
+</section>
+
+<!--
+<section title="Requirements" anchor="requirements">
+<section title="Host Support for Multi-Router and Multi-Prefix IPv6 Networks" anchor="host-reqs">
+<t>SLAAC hosts MUST maintain state information for received SLAAC configuration information on a per-router basis (as identified by the router's IPv6 link-local address and the associated zone index). In those cases where SLAAC information includes "lifetime" values, such information timers MUST be maintained on a per-router basis.  If a per-router lifetime expires, this MUST only affect the usage of such information with the router for which the "lifetime" has expired.</t>
+
+<t>SLAAC hosts MUST associate each SLAAC router with an IPv6 prefix set, that is composed of all prefixes that has been advertised by the router via SLAAC PIOs (irrespective of how e.g. the "A" and "L" flags of the PIO were set).</t>
+
+<t>Routing inforamation conveyed in SLAAC RIOs or Redirect messages MUST be associated only with the prefix set of the router that advertised the information, and MUST only be employed for IPv6 packets sourced from addresses in that prefix set.</t>
+<t>Server-type information such as RDNSS MUST be associated with the prefix set of the router that advertised it. When performing queries to such servers, SLAAC hosts MUST employ IP addresses belonging to the prefix set of the router that advertised the servers.</t>
+
+</section>
+
+
+</section>
+
+-->
+
+    <section title="IANA Considerations">
+      <t>
+This document has no actions for IANA.
+</t>
+    </section>
+
+
+    <section title="Security Considerations">
+<t>This document does not introduce any new attack vectors to the ones associated with IPv8 Neighbor Discovery <xref target="RFC4861"/> and IPv6 Stateless Address Autoconfiguration (SLAAC).</t>
+
+<t>If attacks based on forged RA packets are a concern, technologies such as RA-Guard <xref target="RFC6105"/> <xref target="RFC7113"/> should be deployed.</t>
+
+    </section>
+
+
+
+<section title="Acknowledgments">
+<t>The authors would like to thank (in alphabetical order) Brian Carpenter for providing valuable comments on earlier versions of this document.</t>
+
+<t>Fernando would also like to thank Brian Carpenter who, over the years, has answered many questions and provided valuable comments that has benefited his protocol-related work.</t>
+
+    </section>
+
+  </middle>
+  <back>
+
+    <references title="Normative References">
+	<?rfc include="reference.RFC.2119" ?>
+	<?rfc include="reference.RFC.8028" ?>
+	<?rfc include="reference.RFC.4191" ?>
+	<?rfc include="reference.RFC.4861" ?>
+	<?rfc include="reference.RFC.4862" ?>
+	<?rfc include="reference.RFC.8106" ?>
+	<?rfc include="reference.RFC.8174" ?>
+	<?rfc include="reference.RFC.8504" ?>
+	</references>
+
+    <references title="Informative References">
+
+	<?rfc include="reference.RFC.2827" ?>
+	<?rfc include="reference.RFC.6105" ?>
+	<?rfc include="reference.RFC.6724" ?>
+	<?rfc include="reference.RFC.7113" ?>
+	<?rfc include="reference.I-D.ietf-6man-rfc6724-update" ?>
+	<?rfc include="reference.I-D.gont-v6ops-multi-ipv6" ?>
+	<?rfc include="reference.I-D.link-v6ops-gulla" ?>
+	
+	<reference anchor="slaac-renum-05" target="https://www.ietf.org/archive/id/draft-ietf-6man-slaac-renum-05.txt">
+		<front>
+			<title>Improving the Robustness of Stateless Address Autoconfiguration (SLAAC) to Flash Renumbering Events</title>
+	
+	
+	    <author fullname="Fernando Gont" initials="F." surname="Gont">
+
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+<!--          <code>1706</code> -->
+          <city>Villa Devoto</city>
+          <region>Ciudad Autonoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+<!--        <phone>+54 11 4650 8472</phone> -->
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+       </address>
+    </author>
+
+
+     <author fullname="Jan Zorz" initials="J." surname="Zorz">
+
+
+      <organization abbrev="6connect">6connect</organization>
+
+      <address>
+      <!--
+        <postal>
+          <street>Frankovo naselje 165</street>
+         <code>4220</code> 
+          <city>Skofja Loka</city>
+
+          <country>Slovenia</country>
+        </postal> -->
+        <email>jan@connect.com</email>
+<!--        <uri>https://www.6connect.com/</uri> -->
+      </address>
+    </author>
+    
+
+<author initials="R." surname="Patterson" fullname="Richard Patterson">
+
+      <organization>Sky UK</organization>
+
+      <address>
+
+        <email>richard.patterson@sky.uk</email>
+
+      </address>
+
+    </author>
+
+
+			<date month="March" year="2023"/>
+		</front>
+		<seriesInfo name="IETF" value="draft"/>
+	</reference>
+	
+	
+    </references>
+
+<section title="Sample scenarios" anchor="spec-sample-scenarios">
+
+<section title="Normal Usage of SLAAC Information by IPv6 Hosts">
+<t>
+Consider the following scenario:
+<list style="symbols">
+  <t>Two SLAAC routers (ROUTER_A and ROUTER_B) from different ISPs (ISP_A and ISP_B, respectively) are attached to NETWORK_C</t>
+  <t>Router A advertises:
+    <list style="symbols">
+      <t>Prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+      <t>One Recursive DNS server (RDNNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+    </list>
+  </t>
+  <t>Router B advertises:
+    <list style="symbols">
+      <t>Prefix PREFIX_B for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+      <t>One Recursive DNS server (RDNSS_B) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+    </list>
+  </t>
+ </list>
+
+An IPv6 host that attaches to Network C and receives the aforementioned information should interpret it as follows:
+  <list style="symbols">
+      <t>It may configure IPv6 addresses from PREFIX_A, and send packets from such addresses via ROUTER_A. It may send DNS queries to RDNSS_A from addresses in PREFIX_A, via ROUTER_A, and initiate communication with the resulting IPv6 addresses using source addresses from PREFIX_A (via ROUTER_A, as noted above).</t>
+
+      <t>It may configure IPv6 addresses from PREFIX_B, and send packets from such addresses via ROUTER_B. It may send DNS queries to RDNSS_B from addresses in PREFIX_B, via ROUTER_B, and initiate communication with resulting IPv6 addresses using source addresses from PREFIX_B (via ROUTER_B, as noted above).</t>
+  </list>
+</t>
+
+
+<t>Any other combination of the network configuration information that mixes information from ROUTER_A and ROUTER_B is likely to result in interoperability problems and/or suboptimal service, since e.g.:
+    <list style="symbols">
+        <t>ROUTER_A may implement network ingress filtering, and thus drop packets originating from NETWORK_C if they do not employ a source address from PREFIX_A.
+        </t>
+        <t>RDNSS_A may implement Access Control Lists (ACLs) such that it only accepts DNS queries from addresses in PREFIX_A.</t>
+        <t>DNS Resolution of a domain name (e.g. "www.example.com may") may employ "split-horizon" DNS, and the domain name may map to different IPv6 addreses depending on the RDNSS employed for name resolution and/or the IPv6 addresses employed for the source address of the DNS queries. When "www.example.com" is resolved by means of RDNSS_A, the resulting IPv6 addresses are likely to be topologically close to ISP_A. Thus, a host that resolves "www.example.com" via RDNSS_A but then initiates communication with the resulting IPv6 addresses via ISP_B is likely to receive sub-optimal service (e.g. longer Round-Trip Times (RTTs)). The corresponding systems might as well be prepared to only service ISP_A, and enforce ACLs dropping traffic that does not originate from PREFIX_A.</t>
+    </list>
+</t>
+</section>
+
+
+<section title="Information Advertised by Multiple Routers on the Same Link" anchor="conflicting">
+
+<t>Similarly, consider this other network scenario:
+<list style="symbols">
+  <t>Two SLAAC routers (ROUTER_A1 and ROUTER_A2), both from ISP_A, are attached to NETWORK_C</t>
+  <t>Router A1 advertises:
+    <list style="symbols">
+      <t>Prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+      <t>One Recursive DNS server (RDNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+    </list>
+  </t>
+  <t>Router A2 advertises:
+    <list style="symbols">
+      <t>Prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+      <t>One Recursive DNS server (RDNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+    </list>
+  </t>
+ </list>
+
+Let us assume that, at some point in time, ROUTER_A2 starts invalidating the previously-advertised information. Namely,
+<list style="symbols">
+  <t>Router A2 starts to advertise prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>) with a "valid lifetime" of 0.</t>
+  <t>Router A2 starts to advertise RDNSS_A (by means of Recursive DNS Server option <xref target="RFC8106"/>) with a "lifetime" of 0.</t>
+</list>
+
+A SLAAC host that receives this (updated) information should interpret it as:
+<list style="symbols">
+<t>As far as ROUTER_A2 is concerned, addresses in PREFIX_A are no longer valid, and should not be used when sending IPv6 packets via ROUTER_A2.</t>
+<t>As far as ROUTER_A2 is concerned, RDNSS_A is no longer a valid RDNSS.</t>
+<t>However, this should not affect the validity of this information (ot its usage) with other SLAAC routers. Namely, in our scenario, a SLAAC host attached to NETWORK_C should still consider addresses in PREFIX_A to be valid when e.g. used in conjunction with ROUTER_A1, and should still consider RDNSS_A to be a valid RDNSS to send queries from PREFIX_A via ROUTER_A1.</t>
+<t>Only when a piece of SLAAC information is no longer valid for any of SLAAC router would the corresponding information be completely removed from the SLAAC host.
+</t>
+</list>
+</t>
+
+
+<!--
+<t>Consider the following scenario:
+<list style="symbols">
+<t>Three SLAAC routers (Router A, Router B, and Router C) are connected to Network D.</t>
+<t>Router A advertises prefix 2001:db8:a::/64 for address configuration.</t>
+<t>Router B advertises prefix 2001:db8:b::/64 for address configuration.</t>
+<t>Router C advertises prefix 2001:db8:a::/64 and 2001:db8:c::/64 for address configuration,.</t>
+<t>Host D attaches to Network D, and thus configures addresses in prefixes 2001:db8:a::/64, 2001:db8:b::/64, and 2001:db8:c::/64.</t>
+</list>
+
+Let us now consider that Router C now advertises 2001:db8:a::/64 with a Preferred Lifetime and Valid Lifetime of 0. While Host D might be tempted to simply remove any configured addresses for such prefix, it should only disassociate prefix 2001:db8:a::/64 with Router C. However, this should not affect the association of prefix 2001:db8:a::/64 with Router A, or the associated remaning lifetimes of that prefix, in association with Router A.
+</t>
+
+<t>Only when a piece of SLAAC information is no longer assiated with any router should the associated configuration be removed from a system.</t>
+-->
+</section>
+</section>
+
+<section title="Possible Implementation Approaches" anchor="possible-implementation">
+<t>WHile this document specifies normative requirements regarding the expected behavior of SLAAC hosts, it does not specify requirements regarding how the required behavior should be achieved -- that is, it does not require usage of any specific mechanisms to achive the required behavior. </t>
+
+<t>This section provides non-normative discussion of possible implementation approaches to comply with the requirements in this document.</t>
+<t>[TBD]</t>
+</section>
+  </back>
+
+</rfc>

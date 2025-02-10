@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+
+<?rfc subcompact="no" ?>
+<?rfc toc="yes" ?>
+<?rfc symrefs="yes" ?>
+<?rfc sortrefs="yes"?>
+<?rfc strict="no" ?>
+
+<rfc category="info"  ipr="trust200902"
+docName="draft-gont-v6ops-multi-ipv6-01">
+  <front>
+    <title abbrev="Problem Statement about Multi-Router and Multi-Prefix Networks">Problem Statement about IPv6 Support for Multiple Routers and Multiple Prefixes</title>
+
+
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+
+      <organization abbrev="SI6 Networks">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+
+          <city>Villa Devoto</city>
+          <region>Ciudad Autonoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+       </address>
+    </author>
+
+
+    <date/>
+
+    <area>Operations and Management</area>
+    <workgroup>IPv6 Operations Working Group (v6ops)</workgroup>
+
+<!-- [rfced] Please insert any keywords (beyond those that appear in
+the title) for use on http://www.rfc-editor.org/search.html. -->
+
+<keyword></keyword>
+
+
+
+    <abstract>
+  <t>This document discusses current limitations in IPv6 Stateless Address Auto-cofiguration (SLAAC) that prevent support for common multi-router and multi-interface scenarios. It provides discussion on the challenges that these scenarios represent, and why a solution in this space is warranted. Finally, it specifies a number of common scenarios that any solution in this space should be able to address. 
+  </t>
+    </abstract>
+  </front>
+  <middle>
+
+
+    <section title="Introduction" anchor="intro">
+<t>IPv6 Stateless Address Autoconfiguration (SLAAC) <xref target="RFC4862"/> is based on the assumption that SLAAC routers advertise configuration information on a local network, and SLAAC hosts will aggregate this information and use it they see fits. Simple network scenarios where there is a single local router, or where there are multiple routers but all such routers advertise the same information and provide the same service, SLAAC works just fine. However, other more complex (yet very common) scenarios are currently unsupported (or may only be supported by means of non-standard behaviors).  These scenarios include:
+  <list style="symbols">
+    <t>A host that attaches to a local-area network (LAN) that employs two different routers, one for each upstream Internet Service Provider (ISP).</t>
+    <t>A multihomed host connects to two (or more) different networks via two (or more) network interfaces.</t>
+    <t>A host attaches to a local-area network, and receives conflicting information from two or more SLAAC routers.</t>
+  </list>
+</t>
+
+<t>In the first two scenarios, a SLAAC host will end up receiving information from two routers that are managed by different entities (ISPs) and, for all practical purposes, each piece of configuration information advertised by each router is only of use when employed in conjunction with the rest of the information advertised by such router, and via the router that advertised it. In other words, mixing configuration information from the advertising routers will usually lead to interoperability problems.
+</t>
+
+<t>The third scenario could be considered a corner-case of the first two scenarios: two or more routers send conflicting information, such as the same SLAAC configuration information with different lifetimes (e.g., one SLAAC router advertises the information with a lifetime of zero, and another advertises the same information with non-zero lifetime). In this scenario, a single router advertising configuration information with a lifetime of zero may simply cause hosts to remove that information altogether.</t>
+
+
+<t><xref target="terminology"/> defines the terminology employed throughout this document. <xref target="scenarios"/> elaborate on the scenarios described earlier in this section, which not only serve to define the problem statement, but also as test cases for any solution to it. <xref target="future-work"/> discusses future work may be needed to address the problem at hand.</t>
+</section>
+
+<section title="Terminology" anchor="terminology">
+
+<t>
+  <list style="hanging">
+    <t hangText="Multi-prefix scenario:"><vspace blankLines="0" />
+    A network scenario where a host employs employs two or more IPv6 prefixes for address configuration with SLAAC. This may be result of attaching to two o more networks via two or more network interfaces, or simply the result of attaching to single local network where multiple prefixes are advertised via SLAAC.
+    </t>
+
+    <t hangText="Multi-router scenario:"><vspace blankLines="0" />
+    A network scenario where two or more routers are attached to the same link. 
+    </t>
+
+    <t hangText="Multi-interface scenario:"><vspace blankLines="0" />
+    A network scenario where a host employs two or more network interfaces (without considering the "loopback" interface). Some bibliography refer to these hosts as being "multihomed". 
+    </t>
+
+<t hangText="Multi-IPv6:"><vspace blankLines="0" />
+The term "Multi-IPv6" (case insensitive) is employed throughout this document as a short-hand for network scenarios where multiple IPv6 routers and/or multiple IPv6 prefixe are employed.
+</t>
+
+<t hangText="SLAAC prefix set:"><vspace blankLines="0" />
+The SLAAC prefix set for an SLAAC router is composed of all prefixes that have been advertised by the router via SLAAC PIOs (irrespective of how e.g. the "A" and "L" flags of the PIO were set).
+</t>
+
+  </list>
+</t>
+</section>
+
+<section title="Scenarios" anchor="scenarios">
+
+<section title="Multi-Router Scenario" anchor="multi-router">
+<t>Consider a network scenario where a user attaches two Customer Premises Equipment (CPE) routers to a local network ("Network_C" in our example) for improved network resilience, The scenario could be defined/described as follows:
+<list style="symbols">
+  <t>Two SLAAC routers (Router_A and Router_B) from different ISPs (ISP_A and ISP_B, respectively) are attached to Network C</t>
+  <t>Router A advertises prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>), and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+  <t>Router A also advertises one Recursive DNS server (RDNNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>), and implements ACLs such that it only processes requests from ISP_A customers.</t>
+  <t>Router B advertises prefix PREFIX_B for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>), and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+  <t>Router B also advertises one Recursive DNS server (RDNSS_B) (by means of Recursive DNS Server option <xref target="RFC8106"/>), and implements ACLs such that it only processes requests from ISP_B customers.</t>
+  <t>Host C attaches to Network C, and thus configures:
+    <list style="symbols">
+      <t>Addresses in both prefixes (PREFIX_A and PREFIX_B).</t>
+      <t>Two default routers (Router_A and Router_B).</t>
+      <t>Two recursive DNS servers: RDNSS_A and RDNSS_B.</t>
+    </list>
+  </t>
+</list>
+</t>
+
+<t>
+In this scenario, Host C may only send traffic from PREFIX_A via ROUTER_A or from PREFIX_B via ROUTER_B: otherwise,  packets will be dropped as a result of ingress filtering <xref target="RFC2827"/>. Similarly, Host C may only send DNS queries from PREFIX_A to RDNSS_A, or from PREFIX_B to RDNSS_B: sending traffic from PREFIX_A to RDNSS_B or from PREFIX_B to RDNSS_A will result in the ACLs enforced by the respective ISPs to drop the DNS queries.</t>
+
+<t>Additionally, it should be noted that it is quite common for DNS responses to depend on the source address of the query. For example, if ISP_A had a cache for the site www.example.com, it is quite likely that a query for www.example.com will map to addresses that are topologically close to ISP_A (or even within ISP_A), for improved service. However, if Host C where to send DNS queries to RDNSS_A, but then issue connections from PREFIX_B, it would most likely enjoy suboptimal service (if not blocked).</t>
+
+
+<t>It should be evident that each piece of information being advertised via SLAAC is only usable when employed in conjunction with the rest of the information advertised by the same router. However, SLAAC does not require this behavior: according to the current specifications, hosts are free to use any piece of configuration they learn via SLAAC as they see fit.
+</t>
+</section>
+
+
+<section title="Multi-Interface Scenario" anchor="multi-interface">
+
+<t>This scenario is similar to the one described in <xref target="multi-router"/> with the only difference in that a host communicated with the two routers over different network interfaces.</t>
+
+<t>Consider a network scenario where a user connects to two different ISPs (ISP_A and ISP_B), via two different network interfaced (e.g., one Ethernet interface and a wireless Wi-Fi interface). The scenario could be defined/described as follows:
+<list style="symbols">
+  <t>A SLAAC router (Router_A) from ISP_A is attached to Network_A.</t>
+  <t>A SLAAC router (Router_B) from ISP_B is attached to Network_B.</t>
+  <t>Router A advertises prefix PREFIX_A for address configuration (by means of a Prefix Information Options (PIO) <xref target="RFC4861"/>), and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+  <t>Router A also advertises one Recursive DNS server (RDNNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>), and implements ACLs such that it only processes requests from ISP_A customers.</t>
+  <t>Router B advertises prefix PREFIX_B for address configuration (by means of a Prefix Information Options (PIO) <xref target="RFC4861"/>), and also enforces ingress filtering <xref target="RFC2827"/>.</t>
+  <t>Router B also advertises one Recursive DNS server (RDNSS_B) (by means of Recursive DNS Server option <xref target="RFC8106"/>), and implements ACLs such that it only processes requests from ISP_B customers.</t>
+  <t>Host C attaches to Network_A with one network interface, and to Network_B with another network interface, and configures:
+    <list style="symbols">
+      <t>Addresses in both prefixes (PREFIX_A and PREFIX_B).</t>
+      <t>Two default routers (Router_A and Router_B).</t>
+      <t>Two recursive DNS servers: RDNSS_A and RDNSS_B.</t>
+  </list>
+  </t>
+</list>
+</t>
+
+<t>In this scenario, Host C may only send traffic from PREFIX_A via ROUTER_A or from PREFIX_B via ROUTER_B: otherwise,  packets will be dropped as a result of ingress filtering <xref target="RFC2827"/>. Similarly, Host C may only send DNS queries from PREFIX_A to RDNSS_A, or from PREFIX_B to RDNSS_B: sending traffic from PREFIX_A to RDNSS_B or from PREFIX_B to RDNSS_A will resul in the ACLs enforced by the respective ISPs to drop the DNS queries.</t>
+
+<t>Additionally, it should be noted that it is quite common for DNS responses to depend on the source address of the query. For example, if ISP_A had a cache for the site www.example.com, it is quite likely that a query for www.example.com will map to addresses that are topologically close to ISP_A (or even within ISP_A), for improved service. However, if Host C where to send DNS queries to RDNSS_A, but then issue conenctions from PREFIX_B, it would most likely enjoy suboptimal service (if not blocked).</t>
+
+<t>It should be evident that each piece of information being advertised via SLAAC is only usable when employed in conjuction with the rest of the information advertised by the same router. However, SLAAC does not require this behavior: acording to the current specifications, hosts are free to use any piece of configuration they learn via SLAAC as they see fit.
+<list style="hanging">
+<t hangText="NOTE:"><vspace blankLines="0" />
+A host implementing the Weak End System (ES) model (see Section 3.3.4.2 from <xref target="RFC1122"/>) could indeed send e.g. packets from PREFIX_A to ROUTER_B. 
+</t>
+</list>
+</t>
+
+</section>
+
+<section title="Conflicting Information" anchor="conflicting-information">
+<t>Consider the case where two routers attach to the same network, and advertise the same configuration information. That is,
+<list style="symbols">
+  <t>Two SLAAC routers (Router_A and Router_B) are attached to Network_C</t>
+  <t>Router A advertises prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+  <t>Router A also advertises one Recursive DNS server (RDNNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+  <t>Router B advertises prefix PREFIX_A for address configuration (by means of a Prefix Information Option (PIO) <xref target="RFC4861"/>).</t>
+  <t>Router B also advertises one Recursive DNS server (RDNSS_A) (by means of Recursive DNS Server option <xref target="RFC8106"/>).</t>
+  <t>Host C attaches to Network_C, and thus configures:
+    <list style="symbols">
+      <t>Addresses in PREFIX_A.</t>
+      <t>Two default routers (Router_A and Router_B).</t>
+      <t>One recursive DNS servers: RDNSS_A.</t>
+    </list>
+  </t>
+</list>
+</t>
+
+<t>Consider the case where e.g. Router_B is unable to refresh its network configuration information from its upstream, and thus advertises the same configuration as before, but with a lifetime of 0. That is, it advertises:
+<list style="symbols">
+  <t>A PIO conveying PREFIX_A with both a Preferred Lifetime and a Valid Lifetime of 0.</t>
+  <t>A RDNSS conveying RDNSS_A with a Lifetime of 0.</t> 
+</list>
+</t>
+
+<t>Presumably, this means that according to Router_B, this information should no longer be used:
+<list style="symbols">
+<t>Hosts should remove any configured addresses for such prefixes. As a result, they would also abort any ongoing TCP connections.</t>
+<t>Hosts should also remove the corresponding RDNSS server from their list of RDNSS servers.</t>
+</list>
+</t>
+
+<t>This would also happen if Router_A was still announcing the same configuration information with non-zero lifetimes.</t>
+
+<t>It is clear that a more resilient behavior would be to maintain different timers for each SLAAC advertising router. Thus, if a SLAAC router advertised some configuration information with a lifetime of 0, this would simply mean that such configuration information would be disassociated with that particular router. Only when configuration information is no longer associated with any router would the information be removed from the host altogether.
+</t>
+
+</section>
+
+</section>
+
+<section title="Prior Work" anchor="prior-work">
+<t><xref target="RFC8028"/> has analyzed the challenge represented by having multiple default routers when addresses from multiple prefixes are employed. However, there are at least two gaps in the specification:
+<list style="symbols">
+<t>Extrapolating RFC 8028 to other network configuration information (such as Route Information Options (RIOs) <xref target="RFC4191"/> and RDNSS <xref target="RFC8106"/>).</t>
+<t>Considering some corner cases that must be properly handled when implementing the recommendations from <xref target="RFC8028"/>, such as how to aggregate configuration information when the same information is advertised by multiple routers, with different timers/lifetime values (as discussed in <xref target="conflicting-information"/>).</t>
+</list>
+</t>
+</section>
+
+
+<section title="Future Work" anchor="future-work">
+<t>This document describes a number of common network scenarios that are currently unsupported by IPv6. These scenarios have become more and more common, as a result of:
+<list style="symbols">
+<t>Increased number of home-office users, requiring the use of multiple upstream ISP for improved resiliency</t>
+<t>Increased number of mobile users, which may not only connect via the mobile operator but also via a Wi-Fi connection when available.</t>
+</list>
+</t>
+
+<t>As a result, this document concludes that protocol improvements that accommodate these deployment scenarios are warranted. <xref target="I-D.gont-6man-multi-ipv6-spec"/> is a draft protocol specification that aims to incorporate support for these scearios into IPv6 hosts.</t>
+</section>
+
+
+    <section title="IANA Considerations">
+      <t>
+This document has no actions for IANA.
+</t>
+    </section>
+
+
+    <section title="Security Considerations">
+<t>This document does not introduce any new attack vectors.</t>
+
+
+    </section>
+
+
+
+<section title="Acknowledgments">
+<t>The authors would like to thank (in alphabetical order) Brian Carpenter for providing valuable comments on earlier versions of this document.</t>
+
+<t>Fernando would also like to thank Brian Carpenter who, over the years, has answered many questions and provided valuable comments that has benefited his protocol-related work.</t>
+    </section>
+
+  </middle>
+  <back>
+
+    <references title="Normative References">
+  <?rfc include="reference.RFC.1122" ?>
+	<?rfc include="reference.RFC.2119" ?>
+  <?rfc include="reference.RFC.4191" ?>
+	<?rfc include="reference.RFC.8028" ?>
+	<?rfc include="reference.RFC.8106" ?>
+	<?rfc include="reference.RFC.4861" ?>
+	<?rfc include="reference.RFC.4862" ?>
+	</references>
+
+    <references title="Informative References">
+
+	<?rfc include="reference.RFC.2827" ?>
+	<?rfc include="reference.I-D.gont-6man-multi-ipv6-spec" ?>	
+	
+    </references>
+
+
+  </back>
+</rfc>
+
